@@ -9,21 +9,23 @@ export default function Home() {
   const [bookmarks, setBookmarks] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
 
-  useEffect(() => {
-    getUser();
+ useEffect(() => {
+  getUser();
 
-    // 🔴 Realtime updates
-    const channel = supabase
-      .channel("bookmarks")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "bookmarks" },
-        fetchBookmarks
-      )
-      .subscribe();
+  const channel = supabase
+    .channel("bookmarks")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "bookmarks" },
+      () => fetchBookmarks()   // ✅ FIXED
+    )
+    .subscribe();
 
-    return () => supabase.removeChannel(channel);
-  }, []);
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
+
 
   const getUser = async () => {
     const { data } = await supabase.auth.getUser();
@@ -100,14 +102,7 @@ const copyLink = (link) => {
   alert("Copied!");
 };
 
-const channel = supabase
-  .channel("bookmarks")
-  .on(
-    "postgres_changes",
-    { event: "*", schema: "public", table: "bookmarks" },
-    () => fetchBookmarks()   // ✅ fixed
-  )
-  .subscribe();
+
 
   if (!user) {
     return (
